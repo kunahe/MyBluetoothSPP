@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyBluetoothSPP</string>
+    <string name="action_settings">Settings</string>
+</resources>
