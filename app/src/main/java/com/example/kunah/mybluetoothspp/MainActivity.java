@@ -35,12 +35,14 @@ public class MainActivity extends AppCompatActivity {
 
         BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null) {
-            Toast.makeText(this, "Cannot find Bluetooth hardware.", Toast.LENGTH_LONG ).show();
+            //Toast.makeText(this, "Cannot find Bluetooth hardware.", Toast.LENGTH_LONG ).show();
+            App.toast("Cannot find Bluetooth hardware.", 0);
             finish();
         } else {
             //Toast.makeText(this, "Got default bluetooth adapter.", Toast.LENGTH_LONG).show();
             if (!btAdapter.isEnabled()) {
-                Toast.makeText(this, "Please turn on Bluetooth switch.", Toast.LENGTH_LONG).show();
+                //Toast.makeText(this, "Please turn on Bluetooth switch.", Toast.LENGTH_LONG).show();
+                App.toast("Please turn on Bluetooth switch.", 0);
                 // 跳转开启蓝牙界面
                 startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), 112);
             }
