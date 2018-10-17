@@ -56,6 +56,7 @@ public class BtReceiver extends BroadcastReceiver {
             case BluetoothDevice.ACTION_FOUND:
                 short rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MAX_VALUE );
                 Log.i(TAG, "EXTRA_RSSI:" + rssi);
+                //Log.i("addItems", "####" + dev.getName());
                 mListener.foundDev(dev);
                 break;
             case BluetoothDevice.ACTION_PAIRING_REQUEST: // 在系统弹出配对框之前，实现自动配对，取消系统配对框

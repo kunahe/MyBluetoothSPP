@@ -3,6 +3,7 @@ package com.example.kunah.mybluetoothspp;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -26,10 +27,29 @@ import com.dou361.dialogui.listener.DialogUIItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BtBase.Listener,
+        BtReceiver.Listener { //BtDevAdapter.Listener{
 
     private Activity mActivity;
-    private Context mContext;
+    //private Context mContext;
+    private BtDevWidget mbdw = new BtDevWidget(new DialogUIItemListener(){
+        @Override
+        public void onItemClick(CharSequence text, int position) {
+            String[] str = text.toString().split("\n");
+            //Log.i("JAVA_SPLIT", str[0] + " " + str[1]);
+            BluetoothDevice dev = mbdw.findDevByAddress(str[1]);
+            if (mClient.isConnected(dev)) {
+                //App.toast(text.toString() + " " + position, 0);
+                App.toast("already connected " + dev.getAddress(), 0);
+                return;
+            }
+            mClient.connect(dev);
+            App.toast("Connecting " + dev.getAddress(), 0);
+//            mTips.setText("正在连接...");
+        }
+    });
+    private BtReceiver mBtReceiver;
+    private final BtClient mClient = new BtClient(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +59,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mActivity = this;                                      // vital !!
-        mContext = getApplication();                           // vital !!
-        DialogUIUtils.init(mContext);                          // vital !!
+        //mContext = getApplication();                           // vital !!
+        //DialogUIUtils.init(mContext);                          // vital !!
+        mBtReceiver = new BtReceiver(this, this);//注册蓝牙广播
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -49,31 +70,33 @@ public class MainActivity extends AppCompatActivity {
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
 
-                List<TieBean> strings = new ArrayList<TieBean>();
-                strings.add(new TieBean("1"));
-                strings.add(new TieBean("2"));
-                strings.add(new TieBean("3"));
-
-                DialogUIUtils.showSheet(mActivity, strings, "", Gravity.CENTER, true, true, new DialogUIItemListener() {
-                    @Override
-                    public void onItemClick(CharSequence text, int position) {
-                        //showToast(text);
-                    }
-                }).show();
+//                List<TieBean> strings = new ArrayList<TieBean>();
+//                strings.add(new TieBean("1"));
+//                strings.add(new TieBean("2"));
+//                strings.add(new TieBean("3"));
+//
+//                DialogUIUtils.showSheet(mActivity, strings, "", Gravity.CENTER, true, true, new DialogUIItemListener() {
+//                    @Override
+//                    public void onItemClick(CharSequence text, int position) {
+//                        //showToast(text);
+//                    }
+//                }).show();
+                BluetoothAdapter.getDefaultAdapter().startDiscovery();
+                mbdw.show(mActivity);
             }
         });
 
         BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null) {
-            Toast.makeText(this, "Cannot find Bluetooth hardware.", Toast.LENGTH_LONG ).show();
-            //App.toast("Cannot find Bluetooth hardware.", 0);
+            //Toast.makeText(this, "Cannot find Bluetooth hardware.", Toast.LENGTH_LONG ).show();
+            App.toast("Cannot find Bluetooth hardware.", 0);
             Log.e("MainActivity", "Cannot find Bluetooth hardware.");
             finish();
         } else {
             //Toast.makeText(this, "Got default bluetooth adapter.", Toast.LENGTH_LONG).show();
             if (!btAdapter.isEnabled()) {
-                Toast.makeText(this, "Please turn on Bluetooth switch.", Toast.LENGTH_LONG).show();
-                //App.toast("Please turn on Bluetooth switch.", 0);
+                //Toast.makeText(this, "Please turn on Bluetooth switch.", Toast.LENGTH_LONG).show();
+                App.toast("Please turn on Bluetooth switch.", 0);
                 Log.e("MainActivity", "Please turn on Bluetooth switch.");
                 // 跳转开启蓝牙界面
                 startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), 112);
@@ -116,4 +139,41 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mBtReceiver);
+        mClient.unListener();
+        mClient.close();
+    }
+
+    @Override
+    public void foundDev(BluetoothDevice dev) {
+        //Log.i("addItems", "####foundDev");
+        mbdw.addItem(dev);
+    }
+
+    @Override
+    public void socketNotify(int state, final Object obj) {
+        if (isDestroyed())
+            return;
+        String msg = null;
+        switch (state) {
+            case BtBase.Listener.CONNECTED:
+                BluetoothDevice dev = (BluetoothDevice) obj;
+                msg = String.format("Connected with %s(%s)", dev.getName(), dev.getAddress());
+                break;
+            case BtBase.Listener.DISCONNECTED:
+                msg = "Disconnected";
+                break;
+            case BtBase.Listener.MSG:
+                msg = String.format("\n%s", obj);
+                //mLogs.append(msg);
+                break;
+        }
+        App.toast(msg, 0);
+    }
+
+
 }
