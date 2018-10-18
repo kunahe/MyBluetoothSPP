@@ -39,12 +39,16 @@ public class BtBase {
             isRead = true;
 
             while (isRead) { // 死循环读取
-                switch (in.readInt()) {
-                    case FLAG_MSG: // 读取短消息
-                        String msg = in.readUTF();
-                        notifyUI(Listener.MSG, "接收短消息：" + msg);
-                        break;
-                }
+//                switch (in.readInt()) {
+//                    case FLAG_MSG: // 读取短消息
+                //int type = in.readInt();
+                String msg = in.readUTF();
+                String hexMsg = str2Hex(msg);
+                        //notifyUI(Listener.MSG, "Received：" + msg);
+                notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
+                sendMsg("Ack");
+//                        break;
+//                }
             }
         } catch (Throwable e) {
             close();
@@ -62,7 +66,8 @@ public class BtBase {
             mOut.writeInt(FLAG_MSG); // 消息标记
             mOut.writeUTF(msg);
             mOut.flush();
-            notifyUI(Listener.MSG, "发送短消息：" + msg);
+            String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), msg);
+            notifyUI(Listener.MSG, cMsg);
         } catch (Throwable e) {
             close();
         }
@@ -113,6 +118,16 @@ public class BtBase {
                 }
             }
         });
+    }
+
+    public static String str2Hex(String s) {
+        String str = "";
+        for (int i = 0; i < s.length(); i++) {
+            int ch = (int) s.charAt(i);
+            String s4 = Integer.toHexString(ch);
+            str = str + " " + s4;
+        }
+        return str;
     }
 
     public interface Listener {

@@ -5,6 +5,9 @@ import android.app.Application;
 import android.os.Handler;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class App extends Application {
     private static final Handler sHandler = new Handler();
     private static Toast sToast;
@@ -20,6 +23,13 @@ public class App extends Application {
         sToast.setText(txt);
         sToast.setDuration(duration);
         sToast.show();
+    }
+
+    public static String getTime() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        long timeStamp = System.currentTimeMillis();
+        Date date = new Date(timeStamp);
+        return simpleDateFormat.format(date);
     }
 
     public static void runUI(Runnable runnable) {
