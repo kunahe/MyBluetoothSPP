@@ -2,9 +2,10 @@ package com.example.kunah.mybluetoothspp;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +19,7 @@ public class BtBase {
     private Listener mListener;
     private BluetoothSocket mSocket;
     private DataOutputStream mOut;
+    private InputStream mIn;
     private boolean isRead;
     private boolean isSending;
 
@@ -30,30 +32,72 @@ public class BtBase {
      */
     void loopRead(BluetoothSocket socket) {
         mSocket = socket;
+        Message msg = new Message();
+
         try {
             if (!mSocket.isConnected())
                 mSocket.connect();
             notifyUI(Listener.CONNECTED, mSocket.getRemoteDevice());
             mOut = new DataOutputStream(mSocket.getOutputStream());
-            DataInputStream in = new DataInputStream(mSocket.getInputStream());
+            mIn = mSocket.getInputStream();
+            byte[] buffer = new byte[128];
+            int length;
             isRead = true;
 
             while (isRead) { // 死循环读取
-//                switch (in.readInt()) {
-//                    case FLAG_MSG: // 读取短消息
-                //int type = in.readInt();
-                String msg = in.readUTF();
-                String hexMsg = str2Hex(msg);
-                        //notifyUI(Listener.MSG, "Received：" + msg);
+                //length = mIn.read(buffer);
+                length = getMsgLength();
+                readByLength(buffer, length);
+                String hexMsg = byte2String(buffer, length);
                 notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
-                sendMsg("Ack");
-//                        break;
-//                }
+                String ack = byte2String(msg.makeAck(buffer), msg.getSendLen());
+                //sendMsg("#########");
+                sendMsg(ack);
             }
         } catch (Throwable e) {
+            e.printStackTrace();
             close();
         }
     }
+
+    private int getMsgLength() {
+        int byte1 = 0, byte2 = 0;
+
+        try {
+            byte1 = mIn.read();
+            byte2 = mIn.read();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        if (byte1 != -1 && byte2 != -1) {
+            return byte1 * 256 + byte2;
+        } else {
+            return -1;
+        }
+    }
+
+    private void readByLength(byte[] buf, int length){
+        for (int i = 0; i < length; i++) {
+            try {
+                buf[i] = (byte) (mIn.read() & 0xFF);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String byte2String(byte[] buf, int length) {
+        String str = "";
+        int i;
+
+        for (i = 0; i < length; i++) {
+            str = str + " " + String.format("%02x", (buf[i] & 0xFF));
+        }
+
+        return str;
+    }
+
 
     /**
      *  发送短消息
@@ -123,7 +167,7 @@ public class BtBase {
     public static String str2Hex(String s) {
         String str = "";
         for (int i = 0; i < s.length(); i++) {
-            int ch = (int) s.charAt(i);
+            int ch = (int) s.charAt(i) & 0xFF;
             String s4 = Integer.toHexString(ch);
             str = str + " " + s4;
         }
