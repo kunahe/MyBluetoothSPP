@@ -4,8 +4,9 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-import java.io.DataOutputStream;
+//import java.io.DataOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,7 +19,8 @@ public class BtBase {
 
     private Listener mListener;
     private BluetoothSocket mSocket;
-    private DataOutputStream mOut;
+    //private DataOutputStream mOut;
+    private OutputStream mOut;
     private InputStream mIn;
     private boolean isRead;
     private boolean isSending;
@@ -38,21 +40,29 @@ public class BtBase {
             if (!mSocket.isConnected())
                 mSocket.connect();
             notifyUI(Listener.CONNECTED, mSocket.getRemoteDevice());
-            mOut = new DataOutputStream(mSocket.getOutputStream());
+            //mOut = new DataOutputStream(mSocket.getOutputStream());
+            mOut = mSocket.getOutputStream();
             mIn = mSocket.getInputStream();
             byte[] buffer = new byte[128];
             int length;
             isRead = true;
+            byte[] sendBuf;
 
             while (isRead) { // 死循环读取
                 //length = mIn.read(buffer);
                 length = getMsgLength();
                 readByLength(buffer, length);
-                String hexMsg = byte2String(buffer, length);
-                notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
-                String ack = byte2String(msg.makeAck(buffer), msg.getSendLen());
-                //sendMsg("#########");
+//                String hexMsg = byte2String(buffer, length);
+                msg.parseMsg(buffer, length);
+                sendBuf = msg.makeAck();
+                String ack = byte2String(sendBuf, msg.getSendLen());
                 sendMsg(ack);
+                if (msg.isGetAll()) {
+                    //notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
+                    notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + byte2String(msg.getReceiveBuf(), msg.getReceiveBufLen()));
+                    msg.clearReceiveBuf();
+                }
+                //sendMsg("#########");
             }
         } catch (Throwable e) {
             e.printStackTrace();
@@ -107,8 +117,9 @@ public class BtBase {
             return;
         isSending = true;
         try {
-            mOut.writeInt(FLAG_MSG); // 消息标记
-            mOut.writeUTF(msg);
+            //mOut.writeInt(FLAG_MSG); // 消息标记
+            //mOut.writeUTF(msg);
+            mOut.write(msg.getBytes());
             mOut.flush();
             String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), msg);
             notifyUI(Listener.MSG, cMsg);
