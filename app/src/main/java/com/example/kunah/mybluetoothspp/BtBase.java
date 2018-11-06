@@ -4,7 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-//import java.io.DataOutputStream;
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -19,7 +19,7 @@ public class BtBase {
 
     private Listener mListener;
     private BluetoothSocket mSocket;
-    //private DataOutputStream mOut;
+    private DataOutputStream mOutString;
     private OutputStream mOut;
     private InputStream mIn;
     private boolean isRead;
@@ -40,7 +40,7 @@ public class BtBase {
             if (!mSocket.isConnected())
                 mSocket.connect();
             notifyUI(Listener.CONNECTED, mSocket.getRemoteDevice());
-            //mOut = new DataOutputStream(mSocket.getOutputStream());
+            mOutString = new DataOutputStream(mSocket.getOutputStream());
             mOut = mSocket.getOutputStream();
             mIn = mSocket.getInputStream();
             byte[] buffer = new byte[128];
@@ -51,12 +51,16 @@ public class BtBase {
             while (isRead) { // 死循环读取
                 //length = mIn.read(buffer);
                 length = getMsgLength();
+
                 readByLength(buffer, length);
+                //Log.i("LENGTH", ""+ byte2String(buffer, length));
 //                String hexMsg = byte2String(buffer, length);
                 msg.parseMsg(buffer, length);
                 sendBuf = msg.makeAck();
-                String ack = byte2String(sendBuf, msg.getSendLen());
-                sendMsg(ack);
+//                String ack = byte2String(sendBuf, msg.getSendLen());
+//                sendMsg(ack);
+                sendAck(sendBuf);
+
                 if (msg.isGetAll()) {
                     //notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
                     notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + byte2String(msg.getReceiveBuf(), msg.getReceiveBufLen()));
@@ -112,18 +116,34 @@ public class BtBase {
     /**
      *  发送短消息
      */
-    public void sendMsg(String msg) {
+    public void sendAck(String msg) {
         if (checkSend())
             return;
         isSending = true;
         try {
             //mOut.writeInt(FLAG_MSG); // 消息标记
-            //mOut.writeUTF(msg);
-            mOut.write(msg.getBytes());
-            mOut.flush();
+            mOutString.writeUTF(msg);
+            //mOut.write(msg.getBytes());
+            mOutString.flush();
             String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), msg);
             notifyUI(Listener.MSG, cMsg);
         } catch (Throwable e) {
+            close();
+        }
+        isSending = false;
+    }
+
+    public void sendAck(byte[] buf) {
+        if (checkSend())
+            return;
+        isSending = true;
+        try {
+            mOut.write(buf);
+            mOut.flush();
+            String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), byte2String(buf, 4));
+            notifyUI(Listener.MSG, cMsg);
+        } catch (Throwable e) {
+            e.printStackTrace();
             close();
         }
         isSending = false;

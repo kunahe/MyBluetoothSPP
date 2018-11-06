@@ -173,10 +173,13 @@ public class MainActivity extends AppCompatActivity implements BtBase.Listener,
     public void onSendMsg(View view) {
         if (mClient.isConnected(null)) {
             String msg = mInputMsg.getText().toString();
-            if (TextUtils.isEmpty(msg))
+            if (TextUtils.isEmpty(msg)) {
                 App.toast("Input cannot be empty.", 0);
-            else
-                mClient.sendMsg(msg);
+            }
+            else {
+//                mClient.sendMsg(msg);
+                mClient.sendAck(msg);
+            }
         } else {
             App.toast("Not connected.", 0);
         }

@@ -33,6 +33,8 @@ public class Message {
         mSegment = buf[2];
         mTotalSeg = buf[3];
         mReqWin = 0;
+        // if mSequence, mSegment is required
+        // else send the same ACK
         mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, 4, length);
     }
 
