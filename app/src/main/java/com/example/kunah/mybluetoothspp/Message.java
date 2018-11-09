@@ -3,14 +3,14 @@ package com.example.kunah.mybluetoothspp;
 public class Message {
     private byte[] mSendBuf;
     private byte[] mReceiveBuf;
-    private final int mSendLen = 4;
+    private final int SENDLEN = 4;
     private byte mSequence;
     private byte mSegment;
     private byte mReqWin;
     private byte mTotalSeg;
 
     Message() {
-        mSendBuf = new byte[4];
+        mSendBuf = new byte[SENDLEN];
         mReceiveBuf = new byte[1];
         clearSendBuf();
         //clearReceiveBuf();
@@ -35,14 +35,14 @@ public class Message {
         mReqWin = 0;
         // if mSequence, mSegment is required
         // else send the same ACK
-        mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, 4, length);
+        mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, SENDLEN, length);
     }
 
     public byte[] makeAck() {
         //byte[] res = new byte[mSendLen];
         //parseMsg(buf, length);
 
-        mSendBuf[0] = mSendLen;
+        mSendBuf[0] = SENDLEN;
         mSendBuf[1] = mSequence;
         mSendBuf[2] = mSegment;
         mSendBuf[3] = mReqWin;
@@ -51,11 +51,26 @@ public class Message {
     }
 
     public int getSendLen() {
-        return mSendLen;
+        return SENDLEN;
     }
 
-    public byte[] getReceiveBuf () {
-        return mReceiveBuf;
+    private String convert2String(byte[] buf, int startPos, int length) {
+        String str = "";
+        int i;
+
+        for (i = startPos; i < length; i++) {
+            str = str + " " + String.format("%02x", (buf[i] & 0xFF));
+        }
+
+        return str;
+    }
+
+    //public byte[] getReceiveBuf () {
+    public String getReceiveBuf () {
+        //byte[] retBuf = new byte[mReceiveBuf.length - 1];
+        //System.arraycopy(mReceiveBuf, 1, mReceiveBuf, 0, mReceiveBuf.length - 1);
+        return convert2String(mReceiveBuf, 1, mReceiveBuf.length);
+        //return mReceiveBuf;
     }
 
     public int getReceiveBufLen() {
@@ -66,13 +81,13 @@ public class Message {
         return mTotalSeg == mSegment + 1;
     }
 
-    public byte[] joinBuf(byte[] srcBuf, int srcPos,  byte[] destBuf, int destPos, int destLength) {
-        byte[] newBuf = new byte[srcBuf.length - srcPos + destLength - destPos];
-        //mReceiveBuf = new byte[mReceiveBuf.length + destBuf.length - destPos];
+    public byte[] joinBuf(byte[] oldBuf, int oldBufPos,  byte[] newBuf, int newBufPos, int newBufLen) {
+        byte[] retBuf = new byte[oldBuf.length - oldBufPos + newBufLen - newBufPos];
+        //mReceiveBuf = new byte[mReceiveBuf.length + newBuf.length - newBufPos];
 
-        System.arraycopy(srcBuf, srcPos, newBuf, 0, srcBuf.length - srcPos);
-        System.arraycopy(destBuf, destPos, newBuf, srcBuf.length, destLength - destPos);
+        System.arraycopy(oldBuf, oldBufPos, retBuf, 0, oldBuf.length - oldBufPos);
+        System.arraycopy(newBuf, newBufPos, retBuf, oldBuf.length - oldBufPos, newBufLen - newBufPos);
 
-        return newBuf;
+        return retBuf;
     }
 }

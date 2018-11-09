@@ -105,7 +105,7 @@
         android:id="@+id/editText"
         style="@style/Widget.AppCompat.EditText"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="42dp"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="16dp"
         android:ems="20"
@@ -113,24 +113,25 @@
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/guideline5"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline4" />
+        app:layout_constraintTop_toTopOf="@+id/guideline4"
+        app:layout_constraintVertical_bias="0.81" />
 
     <Button
         android:id="@+id/send_btn"
         android:layout_width="80dp"
         android:layout_height="40dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        android:text="Send"
         android:onClick="onSendMsg"
+        android:text="Send"
         app:layout_constraintBottom_toTopOf="@+id/guideline5"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.025"
+        app:layout_constraintHorizontal_bias="0.575"
         app:layout_constraintStart_toEndOf="@+id/editText"
         app:layout_constraintTop_toBottomOf="@+id/disconnect_btn"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.51" />
 
     <!--<TextView-->
         <!--android:layout_width="wrap_content"-->

@@ -43,7 +43,7 @@ public class BtBase {
             mOutString = new DataOutputStream(mSocket.getOutputStream());
             mOut = mSocket.getOutputStream();
             mIn = mSocket.getInputStream();
-            byte[] buffer = new byte[128];
+            byte[] buffer = new byte[1024];
             int length;
             isRead = true;
             byte[] sendBuf;
@@ -63,7 +63,8 @@ public class BtBase {
 
                 if (msg.isGetAll()) {
                     //notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + hexMsg);
-                    notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + byte2String(msg.getReceiveBuf(), msg.getReceiveBufLen()));
+                    //notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + byte2String(msg.getReceiveBuf(), msg.getReceiveBufLen()));
+                    notifyUI(Listener.MSG, "[" + App.getTime() + "] Received：" + msg.getReceiveBuf());
                     msg.clearReceiveBuf();
                 }
                 //sendMsg("#########");
