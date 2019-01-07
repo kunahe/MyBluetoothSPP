@@ -24,9 +24,11 @@ public class BtBase {
     private InputStream mIn;
     private boolean isRead;
     private boolean isSending;
+    private Message msg;
 
     BtBase(Listener listener) {
         mListener = listener;
+        //Message msg = new Message();
     }
 
     /**
@@ -141,7 +143,7 @@ public class BtBase {
         try {
             mOut.write(buf);
             mOut.flush();
-            String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), byte2String(buf, 4));
+            String cMsg = String.format("<font color='#008577'>[%s] Send: %s</font>", App.getTime(), byte2String(buf, Message.getSendLen()));
             notifyUI(Listener.MSG, cMsg);
         } catch (Throwable e) {
             e.printStackTrace();

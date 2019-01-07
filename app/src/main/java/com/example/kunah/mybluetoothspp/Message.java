@@ -3,16 +3,22 @@ package com.example.kunah.mybluetoothspp;
 public class Message {
     private byte[] mSendBuf;
     private byte[] mReceiveBuf;
-    private final int SENDLEN = 4;
+    static private final int SENDLEN = 5;
+    static private final int MSGHEADERLEN = 4;
     private byte mSequence;
     private byte mSegment;
-    private byte mReqWin;
+    private byte mReqSequence;
+    private byte mReqSegment;
     private byte mTotalSeg;
 
     Message() {
         mSendBuf = new byte[SENDLEN];
         mReceiveBuf = new byte[1];
         clearSendBuf();
+        mSequence = 0;
+        mSegment = 0;
+        mReqSequence = 0;
+        mReqSegment = 0;
         //clearReceiveBuf();
     }
 
@@ -29,13 +35,37 @@ public class Message {
         mReceiveBuf = new byte[1];
     }
     public void parseMsg(byte[] buf, int length) {
+        byte lastSequence = mSequence;
+        byte lastSegment = mSegment;
+        byte lastTotalSeg = mTotalSeg;
+        byte lastReqSequence = mReqSequence;
+        byte lastReqSegment = mReqSegment;
+
         mSequence = buf[1];
         mSegment = buf[2];
         mTotalSeg = buf[3];
-        mReqWin = 0;
-        // if mSequence, mSegment is required
-        // else send the same ACK
-        mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, SENDLEN, length);
+
+        if (lastReqSequence == mSequence && lastReqSegment == mSegment) {
+            // if mSequence and mSegment is required, send required ACK.
+            if (mSegment + 1 != mTotalSeg) {
+                // this big packet is not sent completely.
+                mReqSegment = (byte) (mSegment + (byte) 1);
+                mReqSequence = mSequence;
+            } else {
+                mReqSegment = 0;
+                mReqSequence = (byte) (mSequence + (byte) 1);
+            }
+            mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, MSGHEADERLEN, length);
+        } else {
+            // else send the same ACK
+//            mSequence = lastSequence;
+//            mSegment = lastSegment;
+            mReqSequence = lastReqSequence;
+            mReqSegment = lastReqSegment;
+        }
+
+
+        //mReceiveBuf = joinBuf(mReceiveBuf, 0, buf, SENDLEN, length);
     }
 
     public byte[] makeAck() {
@@ -45,12 +75,13 @@ public class Message {
         mSendBuf[0] = SENDLEN;
         mSendBuf[1] = mSequence;
         mSendBuf[2] = mSegment;
-        mSendBuf[3] = mReqWin;
+        mSendBuf[3] = mReqSequence;
+        mSendBuf[4] = mReqSegment;
 
         return mSendBuf;
     }
 
-    public int getSendLen() {
+    static public int getSendLen() {
         return SENDLEN;
     }
 
@@ -81,7 +112,7 @@ public class Message {
         return mTotalSeg == mSegment + 1;
     }
 
-    public byte[] joinBuf(byte[] oldBuf, int oldBufPos,  byte[] newBuf, int newBufPos, int newBufLen) {
+    private byte[] joinBuf(byte[] oldBuf, int oldBufPos,  byte[] newBuf, int newBufPos, int newBufLen) {
         byte[] retBuf = new byte[oldBuf.length - oldBufPos + newBufLen - newBufPos];
         //mReceiveBuf = new byte[mReceiveBuf.length + newBuf.length - newBufPos];
 
